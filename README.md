@@ -112,7 +112,7 @@ Como até ao momento não se sabe de nenhum username, enviou se um pedido com o 
 
 Com o uso de uma ferramenta estudada nas aulas podemos testar se este pedido é vulnerável a SQL Injection.
 
-###SQLMap:
+### SQLMap
 
 Seguindo o exemplo que tem nos siles da unidade curricular.
 
