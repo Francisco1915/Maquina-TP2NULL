@@ -7,8 +7,9 @@ Teste de Penetração à máquina fornecida pelo professor da unidade curricular
 
 ### Enumeração dos serviços:
 
+´´´bash
 Nmap -A 192.168.57.4
-
+´´´
 ![image](https://user-images.githubusercontent.com/83584144/211105283-bc0c311a-f80d-4fc7-9853-f84a1efb0ff1.png)
 
 A partir deste scan ficamos a saber que temos 3 portas abertas nesta máquina, porta 80 a alojar um serviço de Apche httpd, porta 111 com o rpcbind e por fim a porta 777 com o ssh.
@@ -42,9 +43,9 @@ No nosso scan do nessus encontramos uma vulnerabilidade critica.
 Analise do serviço http da máquina:
 
 #### Porta 80:
-
+´´´bash
 nuclei -u http://192.168.57.4:80/
-
+´´´
 ![image](https://user-images.githubusercontent.com/83584144/211105408-ebb86857-e81f-4c28-ad2d-6300e9f03d05.png)
 
 Sem informação relevante…
@@ -54,9 +55,9 @@ Sem informação relevante…
 Scan para tentar encontrar diretórios do serviço http.
 
 #### Porta 80:
-
+´´´bash
 nikto-h http://192.168.57.4:80/
-
+´´´
 ![image](https://user-images.githubusercontent.com/83584144/211105421-bf96e214-f5c8-426a-a040-816ff2e4c216.png)
 
 Encontramos o diretório /phpmyadmin.
@@ -68,9 +69,9 @@ Encontramos o diretório /phpmyadmin.
 #### Porta 80:
 
 Adicionei a pista encontrada nos meta dados da imagem à lista que usei para enumerar os diretórios, para verificar todos os diretórios existentes e se a pista é mesmo um diretório.
-
+´´´bash
 gobuster dir -u http://192.168.57.7:80 -w /opt/directory-list-lowercase-2.3-medium.txt
-
+´´´
 ![image](https://user-images.githubusercontent.com/83584144/211105466-088a2206-95a4-4a62-9338-a5a3c06ff97b.png)
 
 Muito bem, podemos ver que a pista é mesmo um diretório na página web.
@@ -86,9 +87,9 @@ Ao analisar o código fonte podemos ver que também temos uma dica:
 ![image](https://user-images.githubusercontent.com/83584144/211105503-139dd25d-3631-4ee9-8a6d-8ffdc2d95e05.png)
 
 Podemos ver que é um formulário http método post e que não esta conectado à base de dados e que a password não é complexa, ora bem se não é complexa podemos tentar um brute force.
-
+´´´bash
 hydra 192.168.57.7 http-form-post "/kzMb5nVYJw/index.php:key=^PASS^:invalid key" -l ignore -P /usr/share/wordlists/rockyou.txt -vV -t 64
-
+´´´
 Passo a explicar o comando acima:
 
 - Em primeiro temos o nosso target: 192.168.57.7;
@@ -116,9 +117,9 @@ Com o uso de uma ferramenta estudada nas aulas podemos testar se este pedido é 
 Seguindo o exemplo que tem nos siles da unidade curricular.
 
 Começamos por verificar se é vulnerável a Injections:
-
+´´´bash
 sqlmap 192.168.57.7/kzMb5nVYJw/420search.php?usrtosearch= --forms --batch –dbs
-
+´´´
 ![image](https://user-images.githubusercontent.com/83584144/211105651-3da547a7-760c-45e3-9350-b8a0792a81ca.png)
 
 Guardar o request com o uso da ferramenta burpsuite:
@@ -126,23 +127,23 @@ Guardar o request com o uso da ferramenta burpsuite:
 ![image](https://user-images.githubusercontent.com/83584144/211105662-2f812385-f3f8-4376-9982-8c85b39de13d.png)
 
 Guardei como request.txt.
-
+´´´bash
 sqlmap -r request.txt --dbs
-
+´´´
 ![image](https://user-images.githubusercontent.com/83584144/211105671-2101bd3b-a304-45bf-a1a5-a08d1e498a57.png)
 
 Analisando todas as DB só na "seth" é que obtivemos um resultado relevante para o nosso objetivo.
-
+´´´bash
 sqlmap -r request.txt -D seth –tables
-
+´´´
 ![image](https://user-images.githubusercontent.com/83584144/211105691-fb533b86-5525-40ed-a5de-43310315b405.png)
 
 Temos uma tabela denominada "users".
 
 Vamos realizar o dump dessa tabela e analisar os dados fornecidos.
-
+´´´bash
 sqlmap -r request.txt -D seth -T users --dump
-
+´´´
 ![image](https://user-images.githubusercontent.com/83584144/211105713-499e851b-04b7-47dd-bea9-d74364ce51ad.png)
 
 Encontramos os users da máquina e as suas respetivas passwords em hash.
@@ -158,9 +159,9 @@ Temos a hash realizamos o decode da mesma também:
 Obtemos a password omega.
 
 Tentamos realizar uma ligação ssh então como user ramses e usamos a password encontrada:
-
+´´´bash
 ssh [ramses@192.168.57.7](mailto:ramses@192.168.57.7) -p 777
-
+´´´
 ![image](https://user-images.githubusercontent.com/83584144/211105744-db49c4b4-0b92-4723-9fd0-b04d430d58ca.png)
 
 Ps: Não esquecer que temos de indicar a porta do ssh pois o serviço não se encontra na porta default.
